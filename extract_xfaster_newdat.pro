@@ -1,4 +1,4 @@
-function extract_xfaster_newdat, file, ncl=ncl, lcen=lcen, cler=cler, xfdir=xfdir, res=res, btcl=btcl, tclfile=tclfile, slines=slines, binning=binning, covmat=covmat
+function extract_xfaster_newdat, file, ncl=ncl, lcen=lcen, cler=cler, xfdir=xfdir, res=res, btcl=btcl, tclfile=tclfile, slines=slines, binning=binning, covmat=covmat, lmin=lmin, lmax=lmax
 
     if (not keyword_set(ncl)) then ncl = 1
     if (not keyword_set(xfdir)) then xfdir = '/global/scratch2/sd/dpietrob/Software/XFaster/'
@@ -65,6 +65,9 @@ function extract_xfaster_newdat, file, ncl=ncl, lcen=lcen, cler=cler, xfdir=xfdi
 
     lcen = (lmx+lmn)/2.
     res = cl-btcl
+
+    lmin = lmn
+    lmax = lmx
 
     if (nbtb[0] gt 0) or ( nbeb[0] gt 0) then begin
         print, ' covmat meaningful for ncl=4 only. Skipped.'
