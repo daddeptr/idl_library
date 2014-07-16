@@ -1,6 +1,7 @@
 pro mymoll, file1, file2=file2, minv=minv, maxv=maxv, no_monopole=no_monopole, no_dipole=no_dipole, $
             win=win, hist=hist, maskfile=maskfile, grat=grat, px=px, imap=imap, tit=tit, gal_cut=gal_cut, $
-            dosmooth=dosmooth, chs=chs, outmap=outmap, units=units, gnom=gnom, pos=pos, nested=nested, ash10=ash10
+            dosmooth=dosmooth, chs=chs, outmap=outmap, units=units, gnom=gnom, pos=pos, nested=nested, ash10=ash10, $
+            png=png
 
    ctn = 13
    if keyword_set(ash10) then begin
@@ -68,6 +69,7 @@ pro mymoll, file1, file2=file2, minv=minv, maxv=maxv, no_monopole=no_monopole, n
 ;       if not keyword_set(maxv) then maxv=max(tmp)
 ;       print, ' - min/max-v = ', minv, maxv
        if ( keyword_set(maskfile) ) then begin
+           print, maskfile
            read_fits_map, maskfile, mask, nside=dpns, order=dpord
            if ( (dpord eq 'NESTED') or (dpord eq 'nest') ) then mask=reorder(mask, in='NESTED', out='RING')           
 ;           if n_elements(mask[0,*] eq 1) then mollview, tmp*mask, chars=chs, min=min, max=max, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut else $
@@ -81,13 +83,21 @@ pro mymoll, file1, file2=file2, minv=minv, maxv=maxv, no_monopole=no_monopole, n
                tmp = asinh10( tmp[*,0] )
            endif
            tmp[mp] = -1.6375e30
-           if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos
+           if not keyword_set(png) then begin
+               if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos, colt=ctn
+           endif else begin
+               if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units, png=png else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos, png=png, colt=ctn
+           endelse
        endif else begin
            if keyword_set(ash10) then begin
                print, ' - scaling using asinh10...'
                tmp = asinh10( tmp[*,0] )
            endif
-           if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos
+           if not keyword_set(png) then begin
+               if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos, colt=ctn
+           endif else begin
+               if (not keyword_set(gnom)) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, colt=ctn, units=units, png=png else gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=po, png=png, colt=ctn
+           endelse
        endelse
        if keyword_set(outmap) then outmap = tmp
            
@@ -109,6 +119,7 @@ pro mymoll, file1, file2=file2, minv=minv, maxv=maxv, no_monopole=no_monopole, n
 ;       if not keyword_set(minv) then minv=min(tmp)
 ;       if not keyword_set(maxv) then maxv=max(tmp)
        if ( keyword_set(maskfile) ) then begin
+           print, maskfile
            read_fits_map, maskfile, mask, nside=dpns, order=dpord
            if ( (dpord eq 'NESTED') or (dpord eq 'nest') ) then mask=reorder(mask, in='NESTED', out='RING')           
 ;           if n_elements(mask[0,*] eq 1) then mollview, tmp*mask, chars=chs, min=min, max=max, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut else $
@@ -117,8 +128,13 @@ pro mymoll, file1, file2=file2, minv=minv, maxv=maxv, no_monopole=no_monopole, n
            tmp[mp] = -1.6375e30
        endif
        if keyword_set(ash10) then tmp = asinh10(tmp)
-       if not keyword_set(gnom) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut else $
-          gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos
+       if not keyword_set(png) then begin
+           if not keyword_set(gnom) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut else $
+             gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos, colt=ctn
+       endif else begin
+           if not keyword_set(gnom) then mollview, tmp, chars=chs, min=minv, max=maxv, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut, png=png else $
+             gnomview, tmp, chars=chs, min=minv, max=maxv, tit=tit, win=win, hist=hist, grat=grat, px=px*2/3, rot=pos, png=png, colt=ctn
+       endelse
 ;         mollview, tmp, chars=chs, min=min, max=max, tit=tit, no_monopole=no_monopole, no_dipole=no_dipole, win=win, hist=hist, grat=grat, px=px, gal_cut=gal_cut
        if keyword_set(outmap) then outmap = tmp
    endelse

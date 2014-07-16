@@ -45,7 +45,8 @@ pro plot_xfaster_newdat, file, init=init, pol=pol, win=win, otit=otit, residuals
     ll=l*(l+1)/2./!pi
 
     if keyword_set(bestfit) then begin
-        readcol, bestfit, l, tt, ee, te
+        readcol, bestfit[0], l, tt, ee, xx, te
+        readcol, bestfit[1], lfg, ttfg, eefg, tefg
     endif
 ;## NB consistent with my definition of .newdat
 ;##    if keyword_set(old) then readcol,file,nbtt,nbee,nbbb,nbtb,nbte,nbeb, format='f,f,f,f,f,f',skipline=2,numline=1 else $
@@ -65,24 +66,35 @@ pro plot_xfaster_newdat, file, init=init, pol=pol, win=win, otit=otit, residuals
 ; ------- Binning
 ;    if not keyword_set(bincl) then begin
 
-    btcltt = bp_binning(tcl[*,0]*ll, binning+'_TT')
-    btclee = bp_binning(tcl[*,1]*ll, binning+'_EE')
-    btclte = bp_binning(tcl[*,3]*ll, binning+'_TE')
-    btclbb = bp_binning(tcl[*,2]*ll, binning+'_EE')
+    btcltt = xf_binning(tcl[*,0], binning+'_TT')
+    btclee = xf_binning(tcl[*,1], binning+'_EE')
+    btclte = xf_binning(tcl[*,3], binning+'_TE')
+    btclbb = xf_binning(tcl[*,2], binning+'_EE')
     if keyword_set(xpol) then begin
-        btcltb = bp_binning(tcl[*,4]*ll, binning+'_TE')
-        btcleb = bp_binning(tcl[*,5]*ll, binning+'_EE')
+        btcltb = xf_binning(tcl[*,4], binning+'_TE')
+        btcleb = xf_binning(tcl[*,5], binning+'_EE')
     endif
 
+    bfttfg = 0
+    bfeefg = 0
+    bftefg = 0
     if keyword_set(bestfit) then begin
         x = fltarr(n_elements(tt)+2)
-        x[2:*] = tt
-        bftt = bp_binning(x, binning+'_TT')
-        x[2:*] = ee
-        bfee = bp_binning(x, binning+'_EE')
-        x[2:*] = te
-        bfte = bp_binning(x, binning+'_TE')
-    endif
+        x[2:*] = tt / ( (findgen(n_elements(tt))+2 ) * (findgen(n_elements(tt))+3)/2./!pi )
+        bftt = xf_binning(x, binning+'_TT')
+        x[2:*] = ee / ( (findgen(n_elements(ee))+2 ) * (findgen(n_elements(ee))+3)/2./!pi )
+        bfee = xf_binning(x, binning+'_EE')
+        x[2:*] = te / ( (findgen(n_elements(te))+2 ) * (findgen(n_elements(te))+3)/2./!pi )
+        bfte = xf_binning(x, binning+'_TE')
+;
+        x = fltarr(n_elements(ttfg)+2)
+        x[2:*] = ttfg / ( (findgen(n_elements(ttfg))+2 ) * (findgen(n_elements(ttfg))+3)/2./!pi )
+        bfttfg = xf_binning(x, binning+'_TT')
+        x[2:*] = eefg / ( (findgen(n_elements(eefg))+2 ) * (findgen(n_elements(eefg))+3)/2./!pi )
+        bfeefg = xf_binning(x, binning+'_EE')
+        x[2:*] = tefg / ( (findgen(n_elements(tefg))+2 ) * (findgen(n_elements(tefg))+3)/2./!pi )
+        bftefg = xf_binning(x, binning+'_TE')
+   endif
 
     if keyword_set(noisefile) then begin
         fits2cl, nls, noisefile
@@ -90,12 +102,12 @@ pro plot_xfaster_newdat, file, init=init, pol=pol, win=win, otit=otit, residuals
 ;##        fits2cl, nls, xfdir+'data/mock_noise_tnls.fits'
         nls = tcl * 0.
     endelse
-    bnlstt = bp_binning(nls[*,0]*ll/gaussbeam(beams,4096)^2, binning+'_TT')
-    bnlsee = bp_binning(nls[*,1]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
-    bnlste = bp_binning(nls[*,3]*ll/gaussbeam(beams,4096)^2, binning+'_TE')
-    bnlsbb = bp_binning(nls[*,2]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
-    bnlstb = bp_binning(nls[*,4]*ll/gaussbeam(beams,4096)^2, binning+'_TE')
-    bnlseb = bp_binning(nls[*,5]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
+;    bnlstt = bp_binning(nls[*,0]*ll/gaussbeam(beams,4096)^2, binning+'_TT')
+;    bnlsee = bp_binning(nls[*,1]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
+;    bnlste = bp_binning(nls[*,3]*ll/gaussbeam(beams,4096)^2, binning+'_TE')
+;    bnlsbb = bp_binning(nls[*,2]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
+;    bnlstb = bp_binning(nls[*,4]*ll/gaussbeam(beams,4096)^2, binning+'_TE')
+;    bnlseb = bp_binning(nls[*,5]*ll/gaussbeam(beams,4096)^2, binning+'_EE')
 
     if (nbtt[0] gt 0) then readcol,file,cltt,cltter,lmntt,lmxtt,format='x,f,f,x,x,f,f', skipline=head_nlines, numline=nbtt[0]
     if (nbee[0] gt 0) then readcol,file,clee,cleeer,lmnee,lmxee,format='x,f,f,x,x,f,f', skipline=head_nlines+2*nbtt[0]+1, numline=nbee[0]
@@ -128,23 +140,24 @@ pro plot_xfaster_newdat, file, init=init, pol=pol, win=win, otit=otit, residuals
             endelse
         endelse
 
-        if not keyword_set(xlog) then plot, l[il], tcl[il,0]*ll[il], chars=1.5, xtit='!6l', ytit='!6D!dl!uTT!n [!7l!6K!u2!n]', xr=[lmin,lmax]
-        if keyword_set(xlog) then plot, l[il], tcl[il,0]*ll[il], chars=1.5, xtit='!6l', ytit='!6D!dl!uTT!n [!7l!6K!u2!n]', xr=[lmin,lmax], /xlog, xs=1
+        if not keyword_set(xlog) then plot, l[il], tcl[il,0]*ll[il], chars=1.5, xtit='!6l', ytit='!6D!dl!uTT!n [!7l!6K!u2!n]', xr=[lmin,lmax], xs=1, yr=[-500,6500], ys=1
+        if keyword_set(xlog) then plot, l[il], tcl[il,0]*ll[il], chars=1.5, xtit='!6l', ytit='!6D!dl!uTT!n [!7l!6K!u2!n]', xr=[lmin,lmax], /xlog, xs=1, yr=[-500,6500], ys=1
         oplot, (lmntt+lmxtt)/2,btcltt, psym=4, col=245
 ;##        oplot, l[2:*], tt, col=210
 ;##        oplot, (lmntt+lmxtt)/2,bnlstt/sqrt((lmxtt-lmntt+1)), psym=4, col=215
         oplot, (lmntt+lmxtt)/2,cltt, psym=4
         errplot, (lmntt+lmxtt)/2,cltt-cltter, cltt+cltter
         oplot, l[il], tcl[il,0]*ll[il], col=245
-        xyouts, max(il), 5500, 'TT Spectrum', chars=1.5
+;##        xyouts, max(il), 5500, 'TT Spectrum', chars=1.5
 
 ; ------ Residuals
         if (keyword_set(residuals)) then begin
             if keyword_set(bestfit) then btcltt = bftt
-            if not keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-250,250]*resolution, xr=[lmin,lmax]
+            if not keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-250,250]*resolution, xr=[lmin,lmax], xs=1
             if keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-250,250]*resolution, xr=[lmin,lmax], xs=1, /xlog
             errplot, (lmntt+lmxtt)/2, cltt-btcltt-cltter, cltt-btcltt+cltter
             oplot, (lmntt+lmxtt)/2,cltt*0., thick=0.5, col=245
+;##            oplot, (lmntt+lmxtt)/2,cltt-btcltt, psym=-4
         endif
 
     endif else begin
@@ -199,25 +212,25 @@ pro plot_xfaster_newdat, file, init=init, pol=pol, win=win, otit=otit, residuals
                 btclee = bfee
                 btclte = bfte
             endif
-            if not keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-75,75]*resolution, xr=[lmin,lmax], position=[0.06,0.075,0.325,0.44]
-            if keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-75,75]*resolution, xr=[lmin,lmax], xs=1, /xlog
+            if not keyword_set(xlog) then plot, (lmntt+lmxtt)/2, cltt-btcltt-bfttfg, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-155,155]*resolution, xr=[lmin,lmax], position=[0.06,0.075,0.325,0.44]
+            if keyword_set(xlog) then plot, (lmntt+lmxtt)/2,cltt-btcltt-bttfg, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, yr=[-155,155]*resolution, xr=[lmin,lmax], xs=1, /xlog
 ;##            errplot, (lmntt+lmxtt)/2, -bnlstt*sqrt(2./(2.*((lmntt+lmxtt)/2)+1)/(lmxtt-lmntt+1)), bnlstt*sqrt(2./(2.*((lmntt+lmxtt)/2)+1)/(lmxtt-lmntt+1)), col=215, line=2
-            errplot, (lmntt+lmxtt)/2, cltt-btcltt-cltter, cltt-btcltt+cltter
+            errplot, (lmntt+lmxtt)/2, cltt-btcltt-bfttfg-cltter, cltt-btcltt-bfttfg+cltter
 ;##            errplot, (lmntt+lmxtt)/2, cltt-btcltt-bnlstt*sqrt(2./(2.*((lmntt+lmxtt)/2)+1)/(lmxtt-lmntt+1)), cltt-btcltt+bnlstt*sqrt(2./(2.*((lmntt+lmxtt)/2)+1)/(lmxtt-lmntt+1)), col=100, line=4
             oplot, (lmntt+lmxtt)/2,cltt*0., thick=0.5, col=245
 
 ; --- Res EE
-            if not keyword_set(xlog) then plot, (lmnee+lmxee)/2,clee-btclee, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-4,4]*resolution, ys=1, position=[0.3875,0.075,0.6525,0.44] 
-            if keyword_set(xlog) then plot, (lmnee+lmxee)/2,clee-btclee, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-4,4]*resolution, ys=1, xs=1, /xlog
+            if not keyword_set(xlog) then plot, (lmnee+lmxee)/2,clee-btclee-bfeefg, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-4,4]*resolution, ys=1, position=[0.3875,0.075,0.6525,0.44] 
+            if keyword_set(xlog) then plot, (lmnee+lmxee)/2,clee-btclee-bfeefg, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-4,4]*resolution, ys=1, xs=1, /xlog
 ;##            errplot, (lmnee+lmxee)/2, -bnlsee*sqrt(2./(2.*((lmnee+lmxee)/2)+1)/(lmxtt-lmntt+1)), bnlsee*sqrt(2./(2.*((lmnee+lmxee)/2)+1)/(lmxtt-lmntt+1)), col=215, line=2
-            errplot, (lmnee+lmxee)/2, clee-btclee-cleeer, clee-btclee+cleeer
+            errplot, (lmnee+lmxee)/2, clee-btclee-bfeefg-cleeer, clee-btclee-bfeefg+cleeer
             oplot, (lmnee+lmxee)/2,clee*0., thick=0.5, col=245
 
 ; --- Res TE
 ;            if not keyword_set(xlog) then plot, (lmnte+lmxte)/2,clte-btclte, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-15,15]*resolution, position=[0.715,0.075,0.98,0.44] 
 ;            if keyword_set(xlog) then plot, (lmnte+lmxte)/2,clte-btclte, psym=4, xtit='!6l', ytit='!6Residuals [!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-15,15]*resolution, xs=1, /xlog
-            plot, (lmnte+lmxte)/2, (clte-btclte)/((lmnte+lmxte)/2), psym=4, xtit='!6l', ytit='!6Residuals (!8D!dl!n-Bf)/l!6[!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-0.05,0.05]*resolution, xs=1, xlog=xlog, position=[0.715,0.075,0.98,0.44]
-            errplot, (lmnte+lmxte)/2, (clte-btclte-clteer)/((lmnte+lmxte)/2), (clte-btclte+clteer)/((lmnte+lmxte)/2)
+            plot, (lmnte+lmxte)/2, (clte-btclte-bftefg)/((lmnte+lmxte)/2), psym=4, xtit='!6l', ytit='!6Residuals (!8D!dl!n-Bf)/l!6[!7l!6K!u2!n]', chars=1.5, xr=[lmin,lmax], yr=[-0.025,0.025]*resolution, xs=1, xlog=xlog, position=[0.715,0.075,0.98,0.44]
+            errplot, (lmnte+lmxte)/2, (clte-btclte-bftefg-clteer)/((lmnte+lmxte)/2), (clte-btclte-bftefg+clteer)/((lmnte+lmxte)/2)
             oplot, (lmnte+lmxte)/2,clte*0., thick=0.5, col=245
         endif
 

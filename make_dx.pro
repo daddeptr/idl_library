@@ -15,12 +15,13 @@
 
    do_lfi  = False
    do_hfi  = True
+   do_mask = False
 
    do_var  = False
    do_pol  = True
 
-   fstf = 4 
-   lstf = 4
+   fstf = 3 
+   lstf = 5
 
 ;##   lmax  = 3500l
    ns    = -1l
@@ -36,15 +37,15 @@
 
    nfreq = n_elements(freq)
 
-   dx_version = 'dx11';'dx11_pre' ;'dx9' ;'dx11_pre'
+   dx_version = 'dx11c' ;'dx11';'dx11_pre' ;'dx9' ;'dx11_pre'
    pre_tag = '' ;'_SkyMap'; '';'_DetsetMap'; '_SkyMap'
    lfi_dx_tag = '_1024_DX10'
-   hfi_dx_tag = '_2048_20140124' ;'-ds1_2048_v60' ;'_2048_20120611_detset_2' ;'-ds2_2048_v60';'_2048_v60'
-   mission = 'year2' ;'full' ;, 'year_1' ;'nominal' ;'full'
+   hfi_dx_tag = '_2048_20140406' ;'_2048_20140407' ;'_2048_20140312' ;'_2048_20140212' ;'_2048_20140124' ;'-ds1_2048_v60' ;'_2048_20120611_detset_2' ;'-ds2_2048_v60';'_2048_v60'
+   mission = 'half2' ;'year1' ;'full' ;, 'year_1' ;'nominal' ;'full'
    dir = '/project/projectdirs/planck/data/mission/DPC_maps/'+dx_version+'/'
-   hfi_dir = dir+'hfi/v64/FREQ/' ;'hfi/extra/standard_dpc_gains/FREQ/' ;'hfi/official/' ;'hfi/extra/standard_dpc_gains/FREQ/'
+   hfi_dir = dir+'hfi/solar_dipole_removed/FREQ/' ;'hfi/v64XO/FREQ/' ;+'hfi/v64/FREQ/' ;'hfi/extra/standard_dpc_gains/FREQ/' ;'hfi/official/' ;'hfi/extra/standard_dpc_gains/FREQ/'
    lfi_dir = dir+'../dx10/lfi/'
-   tag = ''
+   tag = '_solarDipoleRemoved'
 
    beam_dir = '/global/scratch/sd/paganol/run_FEBeCoP/output_dx9/transFn/Bl/'
    real_beam = [32.65, 27.00, 13.01, 9.94,   7.04,    4.66,    4.41,    4.47,    4.23]
@@ -67,8 +68,10 @@
        for ifreq=fstf,min([lstf,2]) do begin
            print, sfreq[ifreq]
 
-           print, ''+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'*.fits'
-           spawn, 'ls '+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'*.fits', files
+           ;##print, ''+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'*.fits'
+           ;##spawn, 'ls '+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'*.fits', files
+           print, ''+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'.fits'
+           spawn, 'ls '+lfi_dir+'LFI'+pre_tag+'_'+sfreq[ifreq]+lfi_dx_tag+'_'+mission+'.fits', files
            help, files
            print, files
 
@@ -145,8 +148,8 @@
 
                if (not do_pol) then map1024 = map[*,0] else map1024 = map[*,0:2]
 
-               if (do_moll) then mollview, map1024, win=1, /hist, tit=files[ifile], px=500, /nest
-               if (do_var and do_moll) then mollview, map[*,4], win=2, tit=files[ifile]+' RMS', px=500, /nest
+               if (do_moll) then mymoll, map1024, win=1, /hist, tit=files[ifile], px=500, /nest, /ash10
+               if (do_var and do_moll) then mymoll, map[*,4], win=2, tit=files[ifile]+' RMS', px=500, /nest, /ash10
            
                if do_smooth then begin
                    if do_pol then stop, 'Polarization not implemented'
@@ -215,6 +218,8 @@
        print, "-- HFI ---"
 
        for ifreq = max([fstf,3]),lstf do begin
+           if do_mask and do_pol then mask = fltarr( 12l*2048l^2,3 ) + 1.
+           if do_mask and (not do_pol) then mask = fltarr( 12l*2048l^2 ) + 1.
            print, sfreq[ifreq]
 
 ;##           tmpfile = ''+hfi_dir+'HFI'+pre_tag+'_'+sfreq[ifreq]+hfi_dx_tag+'_'+mission+'*.fits'
@@ -258,6 +263,7 @@
                n_bp = n_elements(bp)
                if (bp[0] ne -1) then begin
                    print, ' :DP - Missing Pixels Found:'
+                   if do_mask then mask[bp,0] = 0.
                    help, bp
                    for ipix=0l,n_bp-1 do begin
                        pix2vec_ring, npix2nside(sz[1]), bp[ipix], vec0
@@ -282,6 +288,7 @@
                        if (bp[0] ne -1) then begin
                            print, ' :DP - Missing Pixels found in P...'
                            help, bp
+                           if do_mask then mask[bp, 1:2] = 0.
                            for ipix=0l,n_bp-1 do begin
                                pix2vec_ring, npix2nside(sz[1]), bp[ipix], vec0
                                query_disc, npix2nside(sz[1]), vec0, 2.*real_beam[ifreq]/60./!radeg, listp, /nest
@@ -346,6 +353,11 @@
                    if (do_var) then begin
                        varfile = out_dir+dx_version+tag+'_Irms_'+sfreq[ifreq]+'_'+mission_tag+'_uK.fits'
                        write_fits_map, varfile, map[*,4], /nest, units='!7l!6K CMB'
+                   endif
+                   if do_mask then begin
+                       maskfile = out_dir+dx_version+tag+'_mask_'+sfreq[ifreq]+'_'+mission_tag+'_uK.fits'
+                       if not do_pol then write_fits_map, maskfile, mask, /nest
+                       if do_pol then write_tqu, maskfile, mask, /nest
                    endif
                endelse
            endfor

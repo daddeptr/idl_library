@@ -29,8 +29,10 @@ function map_regression, template_files, $
    true  = 1b
    false = 0b
 
-   if (keyword_set(infile) and (not keyword_set(inmap))) then read_fits_map, infile, inmap
-
+   if (keyword_set(infile) and (not keyword_set(inmap))) then begin
+       read_fits_map, infile, inmap, order=ord
+       if ord ne 'RING' then inmap = reorder(inmap,in=ord, out='RING')
+   endif
    sz = size(inmap[*,0])
    npix = sz[1]
    nside = sqrt( float(npix) / 12. )
